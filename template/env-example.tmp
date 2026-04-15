@@ -1,0 +1,17 @@
+# ===========================================
+# Variables d'environnement du projet
+# ===========================================
+# Copiez ce fichier en .env et complétez.
+# Ne committez JAMAIS .env dans git.
+# ===========================================
+
+# --- IA ---
+# ANTHROPIC_API_KEY=
+# GOOGLE_API_KEY=
+# OPENAI_API_KEY=
+
+# --- GitHub ---
+# GITHUB_TOKEN=
+
+# --- Base de données ---
+# DATABASE_URL=
