@@ -1,0 +1,10 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "private": true,
+  "scripts": {
+    "postinstall": "node claudy-setup.mjs"
+  },
+  "devDependencies": {
+    "claudy-plugin": "github:gilles-bertrand/claudy-plugin"
+  }
+}

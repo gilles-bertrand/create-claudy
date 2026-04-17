@@ -41,3 +41,10 @@ Thumbs.db
 
 # Subagent observability logs (si hook activé)
 logs/subagent-activity.json
+
+# Symlinks claudy-plugin (régénérés par npm install / postinstall)
+.claude/commands/TPK-*.md
+.claude/agents/code-reviewer.md
+.claude/agents/doc-generator.md
+.claude/agents/test-runner.md
+.claude/agents/validated-builder.md

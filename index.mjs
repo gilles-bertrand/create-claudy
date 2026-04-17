@@ -162,6 +162,15 @@ function runGit(targetDir, args) {
   execFileSync("git", args, { cwd: targetDir, stdio: "ignore" });
 }
 
+function checkClaudeCli() {
+  try {
+    execFileSync("claude", ["--version"], { stdio: "pipe" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function initGitRepo(targetDir) {
   try {
     runGit(targetDir, ["init", "-q", "-b", "main"]);
@@ -229,13 +238,26 @@ async function main() {
     else warn("git n'a pas pu être initialisé (git installé ?)");
   }
 
+  const claudeInstalled = checkClaudeCli();
+
   log(`\n${c.green}${c.bold}✨ Projet ${projectName} créé avec succès !${c.reset}\n`);
-  log(`${c.bold}Étapes suivantes :${c.reset}`);
-  log(`  ${c.cyan}cd${c.reset} ${projectName}`);
-  log(`  ${c.cyan}cp${c.reset} .env.example .env  ${c.dim}# puis remplissez vos clés${c.reset}`);
-  log(`  ${c.cyan}claude${c.reset}                 ${c.dim}# lance Claude Code${c.reset}`);
-  log(`\n${c.dim}Au premier lancement, Claude Code installera automatiquement le plugin${c.reset}`);
-  log(`${c.dim}claudy depuis gilles-bertrand/claudy-marketplace.${c.reset}\n`);
+
+  if (!claudeInstalled) {
+    warn(`Claude Code n'est pas détecté sur ce système.`);
+    log(`  ${c.dim}Installe-le depuis : https://claude.ai/download${c.reset}\n`);
+  } else {
+    success(`Claude Code détecté.`);
+  }
+
+  log(`${c.bold}Plugin claudy (commandes /TPK-*) — choisis une approche :${c.reset}\n`);
+  log(`  ${c.bold}${c.green}1. Via Claude Code${c.reset} ${c.dim}(recommandé si Claude est installé)${c.reset}`);
+  log(`  ${c.dim}Le marketplace et le plugin sont déjà configurés dans .claude/settings.json.${c.reset}`);
+  log(`  ${c.dim}Au premier lancement, Claude Code te proposera d'installer le plugin :${c.reset}`);
+  log(`    ${c.cyan}cd ${projectName} && claude${c.reset}\n`);
+  log(`  ${c.bold}${c.green}2. Via pnpm/npm${c.reset} ${c.dim}(sans Claude Code, commandes disponibles immédiatement)${c.reset}`);
+  log(`  ${c.dim}Installe claudy-plugin et crée les symlinks dans .claude/commands/ :${c.reset}`);
+  log(`    ${c.cyan}cd ${projectName} && pnpm install${c.reset}\n`);
+  log(`${c.dim}Mise à jour future du plugin : pnpm update claudy-plugin${c.reset}\n`);
 }
 
 main().catch((err) => {
