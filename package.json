@@ -1,6 +1,6 @@
 {
   "name": "create-claudy",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Scaffolder pour créer un projet préconfiguré avec le plugin Claude Code claudy",
   "type": "module",
   "bin": {
