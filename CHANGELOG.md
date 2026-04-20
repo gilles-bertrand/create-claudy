@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.2.3] — 2026-04-20
+
+### Fixed
+
+- Template `.claude/settings.json` : alignement du nom du marketplace sur `claudy-marketplace` (clé `extraKnownMarketplaces` et `enabledPlugins: claudy@claudy-marketplace`). Corrige l'erreur *Plugin "claudy" not found in marketplace "claudy"* au premier démarrage.
+
 ## [0.2.2] — 2026-04-20
 
 ### Changed
@@ -38,7 +44,8 @@
 - Fichiers inclus : `CLAUDE.md` squelette, `.env.example`, `.gitignore`, `.mcp.json` (Playwright), `README.md`.
 - Init git automatique avec commit initial (désactivable avec `--no-git`).
 
-[Unreleased]: https://github.com/gilles-bertrand/create-claudy/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/gilles-bertrand/create-claudy/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/gilles-bertrand/create-claudy/releases/tag/v0.2.3
 [0.2.2]: https://github.com/gilles-bertrand/create-claudy/releases/tag/v0.2.2
 [0.2.1]: https://github.com/gilles-bertrand/create-claudy/releases/tag/v0.2.1
 [0.2.0]: https://github.com/gilles-bertrand/create-claudy/releases/tag/v0.2.0
