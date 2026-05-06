@@ -10,7 +10,7 @@
  */
 
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output, exit } from "node:process";
@@ -40,17 +40,29 @@ const error = (msg) => console.error(`${c.red}✗${c.reset} ${msg}`);
 // --- Args ---------------------------------------------------------------
 function parseArgs(argv) {
   const args = argv.slice(2);
+  let mode = "scaffold";
   let projectName = null;
   let skipGit = false;
   let help = false;
 
-  for (const arg of args) {
+  // Première position : sous-commande optionnelle.
+  let i = 0;
+  if (args[0] === "init") {
+    mode = "init";
+    i = 1;
+  } else if (args[0] === "scaffold") {
+    mode = "scaffold";
+    i = 1;
+  }
+
+  for (; i < args.length; i++) {
+    const arg = args[i];
     if (arg === "--help" || arg === "-h") help = true;
     else if (arg === "--no-git") skipGit = true;
     else if (!arg.startsWith("-") && !projectName) projectName = arg;
   }
 
-  return { projectName, skipGit, help };
+  return { mode, projectName, skipGit, help };
 }
 
 function printHelp() {
@@ -58,16 +70,16 @@ function printHelp() {
 ${c.bold}create-claudy${c.reset} — scaffolder pour un projet Claude Code préconfiguré
 
 ${c.bold}Usage${c.reset}
-  pnpm create claudy [project-name] [options]
-  npm create claudy@latest [project-name] [options]
-  npx create-claudy [project-name] [options]
+  create-claudy [scaffold] <project-name> [options]   ${c.dim}# nouveau projet${c.reset}
+  create-claudy init [options]                        ${c.dim}# installe .claude/ dans le projet courant${c.reset}
 
-${c.bold}Options${c.reset}
+${c.bold}Options (scaffold)${c.reset}
   --no-git       Ne pas initialiser de dépôt git
   -h, --help     Affiche cette aide
 
-${c.bold}Example${c.reset}
+${c.bold}Exemples${c.reset}
   pnpm create claudy mon-super-projet
+  npx create-claudy init
 `);
 }
 
@@ -135,6 +147,75 @@ function walkFiles(dir, callback) {
   }
 }
 
+// --- JSON merge ---------------------------------------------------------
+function readJsonOrEmpty(filePath) {
+  if (!existsSync(filePath)) return {};
+  try {
+    return JSON.parse(readFileSync(filePath, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function writeJson(filePath, value) {
+  writeFileSync(filePath, JSON.stringify(value, null, 2) + "\n", "utf8");
+}
+
+function unionArray(existing, incoming) {
+  const out = Array.isArray(existing) ? [...existing] : [];
+  const seen = new Set(out);
+  for (const item of incoming ?? []) {
+    if (!seen.has(item)) {
+      out.push(item);
+      seen.add(item);
+    }
+  }
+  return out;
+}
+
+function mergeSettingsJson(existing, template) {
+  const out = { ...existing };
+
+  if (!out.$schema && template.$schema) out.$schema = template.$schema;
+
+  if (template.extraKnownMarketplaces) {
+    out.extraKnownMarketplaces = {
+      ...template.extraKnownMarketplaces,
+      ...(existing.extraKnownMarketplaces ?? {}),
+    };
+  }
+
+  if (template.enabledPlugins) {
+    out.enabledPlugins = {
+      ...template.enabledPlugins,
+      ...(existing.enabledPlugins ?? {}),
+    };
+  }
+
+  if (template.permissions) {
+    out.permissions = { ...(existing.permissions ?? {}) };
+    if (template.permissions.allow) {
+      out.permissions.allow = unionArray(out.permissions.allow, template.permissions.allow);
+    }
+    if (template.permissions.deny) {
+      out.permissions.deny = unionArray(out.permissions.deny, template.permissions.deny);
+    }
+  }
+
+  return out;
+}
+
+function mergeMcpJson(existing, template) {
+  const out = { ...existing };
+  if (template.mcpServers) {
+    out.mcpServers = {
+      ...template.mcpServers,
+      ...(existing.mcpServers ?? {}),
+    };
+  }
+  return out;
+}
+
 // --- Steps --------------------------------------------------------------
 function copyTemplate(targetDir) {
   cpSync(TEMPLATE_DIR, targetDir, { recursive: true });
@@ -187,17 +268,8 @@ function initGitRepo(targetDir) {
   }
 }
 
-// --- Main ---------------------------------------------------------------
-async function main() {
-  const { projectName: argName, skipGit, help } = parseArgs(process.argv);
-
-  if (help) {
-    printHelp();
-    return;
-  }
-
-  log(`\n${c.bold}${c.cyan}claudy${c.reset} ${c.dim}— scaffolder Claude Code${c.reset}\n`);
-
+// --- Scaffold mode ------------------------------------------------------
+async function runScaffold({ projectName: argName, skipGit }) {
   let projectName = argName;
   if (!projectName) {
     projectName = await promptProjectName();
@@ -249,15 +321,105 @@ async function main() {
     success(`Claude Code détecté.`);
   }
 
-  log(`${c.bold}Plugin claudy (commandes /TPK-*) — choisis une approche :${c.reset}\n`);
-  log(`  ${c.bold}${c.green}1. Via Claude Code${c.reset} ${c.dim}(recommandé si Claude est installé)${c.reset}`);
-  log(`  ${c.dim}Le marketplace et le plugin sont déjà configurés dans .claude/settings.json.${c.reset}`);
-  log(`  ${c.dim}Au premier lancement, Claude Code te proposera d'installer le plugin :${c.reset}`);
-  log(`    ${c.cyan}cd ${projectName} && claude${c.reset}\n`);
-  log(`  ${c.bold}${c.green}2. Via pnpm/npm${c.reset} ${c.dim}(sans Claude Code, commandes disponibles immédiatement)${c.reset}`);
-  log(`  ${c.dim}Installe claudy-plugin et crée les symlinks dans .claude/commands/ :${c.reset}`);
-  log(`    ${c.cyan}cd ${projectName} && pnpm install${c.reset}\n`);
-  log(`${c.dim}Mise à jour future du plugin : pnpm update claudy-plugin${c.reset}\n`);
+  log(`${c.bold}Étapes suivantes :${c.reset}\n`);
+  log(`  ${c.dim}1. Lance Claude Code dans le projet :${c.reset}`);
+  log(`     ${c.cyan}cd ${projectName} && claude${c.reset}\n`);
+  log(`  ${c.dim}2. Le marketplace et le plugin claudy sont déjà déclarés dans .claude/settings.json.${c.reset}`);
+  log(`  ${c.dim}   Au premier lancement, Claude Code te proposera d'installer le plugin.${c.reset}\n`);
+  log(`  ${c.dim}3. Pour matérialiser les commandes du plugin dans le projet (versionnables, éditables) :${c.reset}`);
+  log(`     ${c.cyan}/claudy-eject${c.reset}${c.dim}   — copie commands/ agents/ skills/ dans .claude/${c.reset}`);
+  log(`     ${c.cyan}/claudy-sync${c.reset}${c.dim}    — récupère les nouveautés amont plus tard${c.reset}\n`);
+}
+
+// --- Init mode ----------------------------------------------------------
+function initMcpJson(cwd) {
+  const templateFile = join(TEMPLATE_DIR, ".mcp.json");
+  const targetFile = join(cwd, ".mcp.json");
+  if (!existsSync(templateFile)) return;
+
+  const templateJson = readJsonOrEmpty(templateFile);
+  if (!existsSync(targetFile)) {
+    writeJson(targetFile, templateJson);
+    success(".mcp.json créé");
+    return;
+  }
+  const merged = mergeMcpJson(readJsonOrEmpty(targetFile), templateJson);
+  writeJson(targetFile, merged);
+  success(".mcp.json fusionné");
+}
+
+function initClaudeDir(cwd) {
+  const srcDir = join(TEMPLATE_DIR, ".claude");
+  const destDir = join(cwd, ".claude");
+  mkdirSync(destDir, { recursive: true });
+
+  // settings.json — merge JSON
+  const srcSettings = join(srcDir, "settings.json");
+  const destSettings = join(destDir, "settings.json");
+  if (existsSync(srcSettings)) {
+    const existed = existsSync(destSettings);
+    const merged = mergeSettingsJson(readJsonOrEmpty(destSettings), readJsonOrEmpty(srcSettings));
+    writeJson(destSettings, merged);
+    success(".claude/settings.json " + (existed ? "fusionné" : "créé"));
+  }
+
+  // CLAUDE.md — skip si existant
+  const srcClaudeMd = join(srcDir, "CLAUDE.md");
+  const destClaudeMd = join(destDir, "CLAUDE.md");
+  if (existsSync(srcClaudeMd)) {
+    if (existsSync(destClaudeMd)) {
+      warn(".claude/CLAUDE.md existe déjà, non modifié");
+    } else {
+      cpSync(srcClaudeMd, destClaudeMd);
+      substituteInFile(destClaudeMd, { PROJECT_NAME: basename(cwd) });
+      success(".claude/CLAUDE.md créé");
+    }
+  }
+
+  // commands/ et agents/ — dossiers vides
+  for (const sub of ["commands", "agents"]) {
+    mkdirSync(join(destDir, sub), { recursive: true });
+  }
+}
+
+async function runInit() {
+  const cwd = process.cwd();
+  info(`Installation de la couche Claude dans ${c.bold}${cwd}${c.reset}`);
+
+  initMcpJson(cwd);
+  initClaudeDir(cwd);
+
+  const claudeInstalled = checkClaudeCli();
+
+  log(`\n${c.green}${c.bold}✨ Couche Claude installée !${c.reset}\n`);
+
+  if (!claudeInstalled) {
+    warn(`Claude Code n'est pas détecté sur ce système.`);
+    log(`  ${c.dim}Installe-le depuis : https://claude.ai/download${c.reset}\n`);
+  } else {
+    success(`Claude Code détecté.`);
+  }
+
+  log(`${c.dim}Le marketplace et le plugin claudy sont déclarés dans .claude/settings.json.${c.reset}`);
+  log(`${c.dim}Au premier lancement de ${c.reset}${c.cyan}claude${c.reset}${c.dim} dans ce dossier, l'installation du plugin te sera proposée.${c.reset}\n`);
+}
+
+// --- Main ---------------------------------------------------------------
+async function main() {
+  const { mode, projectName, skipGit, help } = parseArgs(process.argv);
+
+  if (help) {
+    printHelp();
+    return;
+  }
+
+  log(`\n${c.bold}${c.cyan}claudy${c.reset} ${c.dim}— scaffolder Claude Code${c.reset}\n`);
+
+  if (mode === "init") {
+    await runInit();
+  } else {
+    await runScaffold({ projectName, skipGit });
+  }
 }
 
 main().catch((err) => {

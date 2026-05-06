@@ -23,8 +23,9 @@ Ce projet utilise le plugin [`claudy`](https://github.com/gilles-bertrand/claudy
 - Sub-agents (`code-reviewer`, `test-runner`, `doc-generator`, `validated-builder`)
 - Skills (`security-audit`, `skill-creator`)
 - Hooks de sécurité actifs par défaut (damage-control)
+- `/claudy-eject` et `/claudy-sync` : matérialiser les ressources du plugin dans `.claude/` du projet, puis suivre les nouveautés amont
 
-Les commandes locales au projet vont dans `.claude/commands/` et les agents locaux dans `.claude/agents/`.
+Les commandes locales au projet vont dans `.claude/commands/` et les agents locaux dans `.claude/agents/`. Une commande locale qui porte le même nom qu'une commande du plugin la remplace.
 
 ## Notes importantes
 

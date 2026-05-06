@@ -10,9 +10,6 @@ Description de votre projet.
 ## Démarrage
 
 ```bash
-# Installer les dépendances
-npm install
-
 # Configurer l'environnement
 cp .env.example .env
 # Complétez .env avec vos clés
@@ -22,6 +19,18 @@ claude
 ```
 
 Au premier lancement, Claude Code détectera le plugin `claudy` référencé dans `.claude/settings.json` et vous proposera de l'installer. Acceptez pour récupérer toutes les commandes `/TPK-*`, agents et hooks de sécurité.
+
+### Personnaliser les commandes par projet
+
+Pour matérialiser les commandes du plugin dans `.claude/` afin de les versionner et les faire évoluer projet-par-projet :
+
+```text
+/claudy-eject          # copie commands/ agents/ skills/ du plugin vers .claude/
+/claudy-sync           # plus tard, rapatrie les nouveautés amont (--new-only par défaut)
+/claudy-sync --diff    # voir ce qui a changé amont sans écraser le local
+```
+
+Les copies projet ont priorité sur la version du plugin ; ce dernier continue de fournir les ressources non éjectées.
 
 ## Structure
 
@@ -55,10 +64,12 @@ Ce projet utilise [`claudy`](https://github.com/gilles-bertrand/claudy-plugin).
 
 Pour mettre à jour le plugin :
 
-```bash
+```text
 /plugin marketplace update claudy-marketplace
 /plugin update claudy@claudy-marketplace
 ```
+
+Si vous avez éjecté des ressources avec `/claudy-eject`, lancez ensuite `/claudy-sync` pour rapatrier les évolutions amont sans toucher à vos customisations.
 
 ## Licence
 
