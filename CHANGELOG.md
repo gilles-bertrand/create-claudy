@@ -2,18 +2,14 @@
 
 ## [Unreleased]
 
-## [0.3.0] — 2026-05-06
+## [0.4.0] — 2026-05-06
 
 ### Added
 
-- Sous-commande `create-claudy init` : installe la couche Claude (`.claude/` + `.mcp.json`) dans un projet existant, sans modifier `package.json` ni l'arborescence applicative.
-- Merge JSON intelligent pour `.claude/settings.json` et `.mcp.json` : union dédupliquée de `permissions.allow`/`deny`, shallow-merge de `extraKnownMarketplaces`/`enabledPlugins`/`mcpServers`, clés utilisateur préservées.
-- `.claude/CLAUDE.md` préservé s'il existe déjà (warn, pas d'écrasement).
 - Documentation des commandes `/claudy-eject` et `/claudy-sync` (fournies par claudy@v0.3.0) dans le README scaffolder, le README template et le `CLAUDE.md` template, comme nouveau workflow recommandé pour personnaliser les ressources du plugin par projet.
 
 ### Changed
 
-- CLI refactorée en deux modes explicites : `scaffold` (défaut, rétrocompatible) et `init`. `create-claudy <nom>` fonctionne toujours à l'identique.
 - Message de fin du scaffold : remplace les anciennes "deux approches (Claude Code / pnpm install + symlinks)" par un parcours unique (lance Claude Code, accepte le plugin, optionnellement `/claudy-eject` pour matérialiser).
 
 ### Removed
@@ -23,6 +19,18 @@
   - `template/package.json` (qui n'existait que pour porter le hook `postinstall` et la `devDependency` `claudy-plugin`).
   - Lignes du `template/.gitignore` qui ignoraient les symlinks régénérés.
 - Les commandes/agents du plugin sont désormais exclusivement servies par le marketplace claudy. Pour matérialiser des copies projet versionnables, utiliser `/claudy-eject` (livré par claudy@v0.3.0).
+
+## [0.3.0] — 2026-04-23
+
+### Added
+
+- Sous-commande `create-claudy init` : installe la couche Claude (`.claude/` + `.mcp.json`) dans un projet existant, sans modifier `package.json` ni l'arborescence applicative.
+- Merge JSON intelligent pour `.claude/settings.json` et `.mcp.json` : union dédupliquée de `permissions.allow`/`deny`, shallow-merge de `extraKnownMarketplaces`/`enabledPlugins`/`mcpServers`, clés utilisateur préservées.
+- `.claude/CLAUDE.md` préservé s'il existe déjà (warn, pas d'écrasement).
+
+### Changed
+
+- CLI refactorée en deux modes explicites : `scaffold` (défaut, rétrocompatible) et `init`. `create-claudy <nom>` fonctionne toujours à l'identique.
 
 ## [0.2.3] — 2026-04-20
 
@@ -66,7 +74,8 @@
 - Fichiers inclus : `CLAUDE.md` squelette, `.env.example`, `.gitignore`, `.mcp.json` (Playwright), `README.md`.
 - Init git automatique avec commit initial (désactivable avec `--no-git`).
 
-[Unreleased]: https://github.com/gilles-bertrand/create-claudy/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/gilles-bertrand/create-claudy/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/gilles-bertrand/create-claudy/releases/tag/v0.4.0
 [0.3.0]: https://github.com/gilles-bertrand/create-claudy/releases/tag/v0.3.0
 [0.2.3]: https://github.com/gilles-bertrand/create-claudy/releases/tag/v0.2.3
 [0.2.2]: https://github.com/gilles-bertrand/create-claudy/releases/tag/v0.2.2
