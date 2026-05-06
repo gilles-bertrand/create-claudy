@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-05-06
+
+### Changed
+
+- Alignement des versions sur `0.4.1` à travers les trois dépôts (`claudy-plugin`, `claudy-marketplace`, `create-claudy`). Le scaffolder référence désormais le plugin `claudy@0.4.1`, qui inclut la prise en charge des `hooks/` dans `/claudy-eject` et `/claudy-sync`.
+
 ## [0.4.0] — 2026-05-06
 
 ### Added
